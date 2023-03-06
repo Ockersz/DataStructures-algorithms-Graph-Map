@@ -4,12 +4,26 @@
  */
 package View;
 
+import Controller.GraphController;
 import Model.Graph;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.JOptionPane;
+import javax.swing.event.MouseInputListener;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
+import org.jxmapviewer.OSMTileFactoryInfo;
+import org.jxmapviewer.input.PanMouseInputListener;
+import org.jxmapviewer.input.ZoomMouseWheelListenerCenter;
+import org.jxmapviewer.viewer.DefaultTileFactory;
+import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.TileFactoryInfo;
+import org.jxmapviewer.viewer.WaypointPainter;
 import sl.city.distance.calculator.SLCityDistanceCalculator;
+import waypoint.EventWaypoint;
+import waypoint.MyWaypoint;
+import waypoint.WaypointRender;
 
 /**
  *
@@ -18,12 +32,15 @@ import sl.city.distance.calculator.SLCityDistanceCalculator;
 public class InternalHome extends javax.swing.JInternalFrame {
 
     Graph graph = new Graph();
-
+    private final Set<MyWaypoint> waypoints = new HashSet<>();
+    private EventWaypoint event;
+    GraphController controller = new GraphController();
     /**
      * Creates new form InternalHome
      */
     public InternalHome() {
         initComponents();
+        init();
         lbl_path.setVisible(false);
 
         txt_mindistance.setEditable(false);
@@ -48,6 +65,47 @@ public class InternalHome extends javax.swing.JInternalFrame {
         }
         
     }
+    private void init() {
+        TileFactoryInfo info = new OSMTileFactoryInfo();
+        DefaultTileFactory tileFactory = new DefaultTileFactory(info);
+        jXMapViewer.setTileFactory(tileFactory);
+        GeoPosition geo = new GeoPosition(6.9059932,79.867961);
+        jXMapViewer.setAddressLocation(geo);
+        jXMapViewer.setZoom(12);
+
+        //  Create event mouse move
+        MouseInputListener mm = new PanMouseInputListener(jXMapViewer);
+        jXMapViewer.addMouseListener(mm);
+        jXMapViewer.addMouseMotionListener(mm);
+        jXMapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCenter(jXMapViewer));
+        event = getEvent();
+    }
+    
+    private void addWaypoint(MyWaypoint waypoint) {
+        for (MyWaypoint d : waypoints) {
+            jXMapViewer.remove(d.getButton());
+        }
+        waypoints.add(waypoint);
+        initWaypoint();
+    }
+
+    private void initWaypoint() {
+        WaypointPainter<MyWaypoint> wp = new WaypointRender();
+        wp.setWaypoints(waypoints);
+        jXMapViewer.setOverlayPainter(wp);
+        for (MyWaypoint d : waypoints) {
+            jXMapViewer.add(d.getButton());
+        }
+    }
+    
+    private EventWaypoint getEvent() {
+        return new EventWaypoint() {
+            @Override
+            public void selected(MyWaypoint waypoint) {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+        };
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -69,10 +127,10 @@ public class InternalHome extends javax.swing.JInternalFrame {
         jLabel4 = new javax.swing.JLabel();
         check_routes = new javax.swing.JCheckBox();
         lbl_path = new javax.swing.JLabel();
-        jp_map = new javax.swing.JPanel();
-        jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         txt_allPaths = new javax.swing.JTextArea();
+        jXMapViewer = new org.jxmapviewer.JXMapViewer();
+        jButton1 = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(1193, 934));
 
@@ -127,102 +185,112 @@ public class InternalHome extends javax.swing.JInternalFrame {
         lbl_path.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
         lbl_path.setText("Path");
 
-        jp_map.setBackground(new java.awt.Color(255, 255, 255));
-
-        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/map_480x601.jpg"))); // NOI18N
-
-        javax.swing.GroupLayout jp_mapLayout = new javax.swing.GroupLayout(jp_map);
-        jp_map.setLayout(jp_mapLayout);
-        jp_mapLayout.setHorizontalGroup(
-            jp_mapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jp_mapLayout.createSequentialGroup()
-                .addContainerGap(75, Short.MAX_VALUE)
-                .addComponent(jLabel5)
-                .addGap(46, 46, 46))
-        );
-        jp_mapLayout.setVerticalGroup(
-            jp_mapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jp_mapLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jLabel5))
-        );
-
         txt_allPaths.setColumns(20);
         txt_allPaths.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
         txt_allPaths.setRows(5);
         jScrollPane1.setViewportView(txt_allPaths);
+
+        javax.swing.GroupLayout jXMapViewerLayout = new javax.swing.GroupLayout(jXMapViewer);
+        jXMapViewer.setLayout(jXMapViewerLayout);
+        jXMapViewerLayout.setHorizontalGroup(
+            jXMapViewerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 600, Short.MAX_VALUE)
+        );
+        jXMapViewerLayout.setVerticalGroup(
+            jXMapViewerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        jButton1.setText("Load");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(89, 89, 89)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(90, 90, 90)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(94, 94, 94)
+                        .addComponent(cmb_startcity, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(44, 44, 44)
+                        .addComponent(jLabel2)
+                        .addGap(18, 18, 18)
+                        .addComponent(cmb_destinationcity, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btn_search, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(89, 89, 89)
+                        .addComponent(jLabel3)
+                        .addGap(57, 57, 57)
+                        .addComponent(txt_mindistance, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(735, 735, 735)
+                        .addComponent(check_routes))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(90, 90, 90)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel3)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(12, 12, 12)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txt_mindistance, javax.swing.GroupLayout.PREFERRED_SIZE, 194, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
-                                        .addComponent(cmb_startcity, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(29, 29, 29)
-                                        .addComponent(jLabel2)
-                                        .addGap(90, 90, 90)
-                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(check_routes)
-                                            .addComponent(cmb_destinationcity, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGap(18, 18, 18)
-                                        .addComponent(btn_search, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(lbl_path, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jp_map, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(40, 40, 40)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 416, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(248, 248, 248))))
+                                .addComponent(jXMapViewer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(45, 45, 45)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 416, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jButton1)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(140, 140, 140)
+                                .addComponent(lbl_path, javax.swing.GroupLayout.PREFERRED_SIZE, 816, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addGap(6, 6, 6))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(52, 52, 52)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmb_destinationcity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_search)
+                .addGap(50, 50, 50)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(3, 3, 3)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel2)
-                            .addComponent(cmb_startcity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(48, 48, 48)
+                        .addComponent(cmb_startcity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(jLabel2))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(3, 3, 3)
+                        .addComponent(cmb_destinationcity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(3, 3, 3)
+                        .addComponent(btn_search)))
+                .addGap(50, 50, 50)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txt_mindistance, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(45, 45, 45)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbl_path, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(check_routes)
-                        .addGap(22, 22, 22)
-                        .addComponent(jScrollPane1))
-                    .addComponent(jp_map, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(82, Short.MAX_VALUE))
+                        .addGap(2, 2, 2)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lbl_path, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(4, 4, 4)
+                .addComponent(check_routes)
+                .addGap(6, 6, 6)
+                .addComponent(jButton1)
+                .addGap(6, 6, 6)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+                    .addComponent(jXMapViewer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(30, 30, 30))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 1157, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -233,10 +301,21 @@ public class InternalHome extends javax.swing.JInternalFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_searchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_searchActionPerformed
-
+        waypoints.clear();
+        jXMapViewer.removeAll();
+        jXMapViewer.repaint();
         if (cmb_startcity.getSelectedIndex() == 0 || cmb_destinationcity.getSelectedIndex() == 0) {
             JOptionPane.showMessageDialog(null, "Please select both Start and Destination cities.","Error",JOptionPane.ERROR_MESSAGE);
         } else {
+            double sourceLat = controller.getLatitude(cmb_startcity.getSelectedItem().toString());
+            double sourceLong  =  controller.getLongitude(cmb_startcity.getSelectedItem().toString());
+            double destinationLat = controller.getLatitude(cmb_destinationcity.getSelectedItem().toString());
+            double destinationLong = controller.getLongitude(cmb_destinationcity.getSelectedItem().toString());
+            
+            addWaypoint(new MyWaypoint("Source", event, new GeoPosition(sourceLat,sourceLong)));
+            addWaypoint(new MyWaypoint("Destination", event, new GeoPosition(destinationLat,destinationLong)));
+            
+            
             List<String> paths = graph.shortestPath(cmb_startcity.getSelectedItem().toString(), cmb_destinationcity.getSelectedItem().toString());
             int distance = graph.shortestDistance(cmb_startcity.getSelectedItem().toString(), cmb_destinationcity.getSelectedItem().toString());
             String label = "";
@@ -289,20 +368,26 @@ public class InternalHome extends javax.swing.JInternalFrame {
         }
     }//GEN-LAST:event_check_routesStateChanged
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        addWaypoint(new MyWaypoint("Test 001", event, new GeoPosition(6.9059932,79.867961)));
+        addWaypoint(new MyWaypoint("Test 002", event, new GeoPosition(6.7185324,80.061256)));
+    }//GEN-LAST:event_jButton1ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_search;
     private javax.swing.JCheckBox check_routes;
     private javax.swing.JComboBox<String> cmb_destinationcity;
     private javax.swing.JComboBox<String> cmb_startcity;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JPanel jp_map;
+    private org.jxmapviewer.JXMapViewer jXMapViewer;
     private javax.swing.JLabel lbl_path;
     private javax.swing.JTextArea txt_allPaths;
     private javax.swing.JTextField txt_mindistance;
