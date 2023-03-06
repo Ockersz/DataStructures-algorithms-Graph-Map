@@ -1,5 +1,12 @@
+package Model;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
+
 class Edge {
+
     private String destination;
     private int distance;
 
@@ -25,19 +32,40 @@ class Edge {
     }
 }
 
-class Graph {
+public class Graph {
+
     private Map<String, List<Edge>> graph;
     private Edge edge;
 
     public Graph() {
-        this.graph = new HashMap<>();
+
+        try {
+            this.graph = new HashMap<>();
+
+            Statement statment1 = DatabaseConnection.getConnection().createStatement();
+            ResultSet rst1 = statment1.executeQuery("Select v_name from vertex");
+
+            while (rst1.next()) {
+                this.addVertex(rst1.getString(1));
+            }
+
+            statment1.clearBatch();
+
+            rst1 = statment1.executeQuery("Select e_source, e_destination, e_distance from edge");
+
+            while (rst1.next()) {
+                this.addEdge(rst1.getString(1), rst1.getString(2), rst1.getInt(3));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
     }
 
     public Graph(Edge edge) {
         this.edge = edge;
         this.graph = new HashMap<>();
     }
-
 
     public void addVertex(String vertex) {
         graph.put(vertex, new ArrayList<>());
@@ -54,16 +82,28 @@ class Graph {
         graph.get(destination).add(new Edge(source, distance)); // add edge in the opposite direction
     }
 
-    public void printGraph() {
-        for (String vertex : graph.keySet()) {
-            List<Edge> edges = graph.get(vertex);
-            StringBuilder sb = new StringBuilder();
-            sb.append(vertex).append(": ");
-            for (Edge edge : edges) {
-                sb.append("(").append(edge.getDestination()).append(", ").append(edge.getDistance()).append(") ");
+    public List<StringBuilder> printGraph(String city) {
+        List<StringBuilder> allpaths = new ArrayList<>();
+        List<String> visited = new ArrayList<>();
+        StringBuilder path = new StringBuilder();
+        path.append(city);
+        printPaths(city, visited, path, allpaths);
+        return allpaths;
+    }
+
+    private void printPaths(String city, List<String> visited, StringBuilder path, List<StringBuilder> allpaths) {
+        visited.add(city);
+        List<Edge> edges = graph.get(city);
+        for (Edge edge : edges) {
+            String destination = edge.getDestination();
+            if (!visited.contains(destination)) {
+                StringBuilder newPath = new StringBuilder(path.toString());
+                newPath.append(" -> ").append(destination).append(" (").append(edge.getDistance()).append(" km)");
+                allpaths.add(newPath);
+                printPaths(destination, visited, newPath, allpaths);
             }
-            System.out.println(sb);
         }
+        visited.remove(city);
     }
 
     public List<String> shortestPath(String startVertex, String endVertex) {
@@ -139,6 +179,10 @@ class Graph {
         return distances.getOrDefault(endVertex, -1); // Return -1 if endVertex is unreachable
     }
 
+    public List<String> getVertices() {
+        return new ArrayList<>(graph.keySet());
+    }
+
     public Map<List<String>, Integer> getAllPaths(String startVertex, String endVertex) {
         Map<List<String>, Integer> paths = new HashMap<>();
         List<String> visited = new ArrayList<>();
@@ -148,7 +192,7 @@ class Graph {
     }
 
     private void getAllPathsUtil(String currentVertex, String endVertex, List<String> visited,
-                                 Map<List<String>, Integer> paths, int distance) {
+            Map<List<String>, Integer> paths, int distance) {
         if (currentVertex.equals(endVertex)) {
             paths.put(new ArrayList<>(visited), distance);
             return;
@@ -164,33 +208,4 @@ class Graph {
         }
     }
 
-
-}
-
-class SriLankaCityDistanceCalculator{
-    public static void main(String[] args) {
-        Graph graph = new Graph();
-
-        graph.addVertex("Colombo");
-        graph.addVertex("Kandy");
-        graph.addVertex("Jaffna");
-        graph.addVertex("Galle");
-        graph.addVertex("Trincomalee");
-        graph.addVertex("Horana");
-        graph.addVertex("Panadura");
-
-
-        graph.addEdge("Colombo", "Kandy", 150);
-        graph.addEdge("Colombo", "Galle", 200);
-        graph.addEdge("Colombo", "Horana", 40);
-        graph.addEdge("Colombo", "Panadura", 100);
-        graph.addEdge("Horana","Panadura", 40);
-
-        System.out.println(graph.shortestPath("Panadura", "Colombo"));
-        System.out.println(graph.shortestDistance("Panadura","Colombo"));
-        Map<List<String>, Integer> allPaths = graph.getAllPaths("Colombo", "Panadura");
-        for (Map.Entry<List<String>, Integer> entry : allPaths.entrySet()) {
-            System.out.println(entry.getKey() + " : " + entry.getValue());
-        }
-    }
 }
